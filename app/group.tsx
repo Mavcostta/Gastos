@@ -11,12 +11,15 @@ import {
   Share,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { createGroup, joinGroup } from "../services/auth";
+import { createGroup, joinGroup, getActiveGroupId } from "../services/auth";
 
 export default function GroupScreen() {
   const { profile, refreshProfile } = useAuth();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
+
+  const activeGroupId = getActiveGroupId(profile);
 
   const handleCreate = async () => {
     if (!profile) return;
@@ -55,15 +58,42 @@ export default function GroupScreen() {
   };
 
   const handleShare = async () => {
-    if (!profile?.groupId) return;
+    if (!activeGroupId) return;
     try {
       await Share.share({
-        message: `Entre no meu grupo de gastos! Código: ${profile.groupId}`,
+        message: `Entre no meu grupo de gastos! Código: ${activeGroupId}`,
       });
     } catch {}
   };
 
-  if (profile?.groupId) {
+  const renderJoinSection = () => (
+    <>
+      <Text style={styles.label}>Entrar com código</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Ex: ABC123"
+        placeholderTextColor="#666"
+        value={code}
+        onChangeText={setCode}
+        autoCapitalize="characters"
+        maxLength={6}
+      />
+
+      <TouchableOpacity
+        style={styles.joinBtn}
+        onPress={handleJoin}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#1A1A2E" />
+        ) : (
+          <Text style={styles.joinBtnText}>Entrar no grupo</Text>
+        )}
+      </TouchableOpacity>
+    </>
+  );
+
+  if (activeGroupId) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
@@ -72,7 +102,7 @@ export default function GroupScreen() {
 
           <View style={styles.codeCard}>
             <Text style={styles.codeLabel}>Código do grupo</Text>
-            <Text style={styles.code}>{profile.groupId}</Text>
+            <Text style={styles.code}>{activeGroupId}</Text>
             <Text style={styles.codeHint}>
               Compartilhe este código com quem quiser adicionar ao grupo
             </Text>
@@ -81,6 +111,23 @@ export default function GroupScreen() {
           <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
             <Text style={styles.shareBtnText}>📤 Compartilhar código</Text>
           </TouchableOpacity>
+
+          <View style={styles.switchBox}>
+            <Text style={styles.switchTitle}>Trocar de grupo</Text>
+            <Text style={styles.switchText}>
+              Se tiver outro código, você pode entrar em outro grupo.
+            </Text>
+            {!showJoin ? (
+              <TouchableOpacity
+                style={styles.switchBtn}
+                onPress={() => setShowJoin(true)}
+              >
+                <Text style={styles.switchBtnText}>Inserir código</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.switchJoinBox}>{renderJoinSection()}</View>
+            )}
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -113,28 +160,7 @@ export default function GroupScreen() {
           <View style={styles.dividerLine} />
         </View>
 
-        <Text style={styles.label}>Entrar com código</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ex: ABC123"
-          placeholderTextColor="#666"
-          value={code}
-          onChangeText={setCode}
-          autoCapitalize="characters"
-          maxLength={6}
-        />
-
-        <TouchableOpacity
-          style={styles.joinBtn}
-          onPress={handleJoin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#1A1A2E" />
-          ) : (
-            <Text style={styles.joinBtnText}>Entrar no grupo</Text>
-          )}
-        </TouchableOpacity>
+        {renderJoinSection()}
       </View>
     </SafeAreaView>
   );
@@ -224,6 +250,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#4ECDC4",
+    marginBottom: 20,
   },
   shareBtnText: { color: "#4ECDC4", fontWeight: "bold", fontSize: 15 },
+  switchBox: {
+    backgroundColor: "#16213E",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#0F3460",
+  },
+  switchTitle: { color: "#fff", fontWeight: "bold", fontSize: 14 },
+  switchText: { color: "#888", fontSize: 12, marginTop: 6, marginBottom: 12 },
+  switchBtn: {
+    backgroundColor: "rgba(78,205,196,0.15)",
+    borderWidth: 1,
+    borderColor: "#4ECDC4",
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  switchBtnText: { color: "#4ECDC4", fontWeight: "bold", fontSize: 13 },
+  switchJoinBox: { marginTop: 12 },
 });
