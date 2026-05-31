@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
+import { getActiveGroupId } from "../../services/auth";
 import {
   subscribeToExpenses,
   subscribeToFixedBills,
@@ -67,7 +68,7 @@ export default function DashboardScreen() {
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [editIncome, setEditIncome] = useState<Income | null>(null);
 
-  const groupId = profile?.groupId;
+  const groupId = getActiveGroupId(profile);
 
   useEffect(() => {
     if (!groupId) return;
@@ -103,6 +104,13 @@ export default function DashboardScreen() {
     }
     prevActiveRef.current = activePeriod;
   }, [activePeriod, hasInitMonth, selMonth, selYear]);
+
+  useEffect(() => {
+    if (!Number.isFinite(selYear) || !Number.isFinite(selMonth)) {
+      setSelYear(today.getFullYear());
+      setSelMonth(today.getMonth());
+    }
+  }, [selMonth, selYear, today]);
 
   // ── filtro por mês selecionado ────────────────────────────────────────────
   const expenses = useMemo(

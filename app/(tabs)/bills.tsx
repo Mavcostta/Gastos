@@ -18,6 +18,7 @@ import {
   Expense,
   CATEGORY_ICONS,
 } from "../../services/expenses";
+import { getActiveGroupId } from "../../services/auth";
 import {
   ensureGroupActiveMonth,
   subscribeToGroupSettings,
@@ -34,7 +35,7 @@ export default function BillsScreen() {
     month: number;
   } | null>(null);
 
-  const groupId = profile?.groupId;
+  const groupId = getActiveGroupId(profile);
 
   useEffect(() => {
     if (!groupId) return;

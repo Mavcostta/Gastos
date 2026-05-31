@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
-import { logout } from "../../services/auth";
+import { getActiveGroupId, logout } from "../../services/auth";
 import {
   subscribeToExpenses,
   subscribeToMonthSnapshots,
@@ -34,7 +34,7 @@ export default function ProfileScreen() {
     month: number;
   } | null>(null);
 
-  const groupId = profile?.groupId;
+  const groupId = getActiveGroupId(profile);
 
   useEffect(() => {
     if (!groupId || !user) return;
