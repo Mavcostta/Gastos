@@ -227,15 +227,8 @@ export default function DashboardScreen() {
   };
 
   // ── totais ────────────────────────────────────────────────────────────────
-  const isSameSelectedMonth = (d: Date) =>
-    d.getFullYear() === selYear && d.getMonth() === selMonth;
   const totalFixedPaid = bills
     .filter((b) => b.paid)
-    .filter((b) => {
-      const paidDate = b.paidAt?.toDate?.();
-      if (paidDate) return isSameSelectedMonth(paidDate);
-      return isActiveMonth;
-    })
     .reduce((s, b) => s + b.amount, 0);
   const totalFixed = totalFixedPaid;
   const totalVariable = expenses
