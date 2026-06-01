@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   FlatList,
+  SectionList,
   TouchableOpacity,
   SafeAreaView,
   Alert,
@@ -69,6 +70,48 @@ export default function ExpensesScreen() {
     filter === "meus"
       ? expenses.filter((e) => e.paidBy === user?.uid)
       : expenses;
+
+  const monthSections = (list: Expense[]) => {
+    const sorted = [...list].sort(
+      (a, b) => b.date.toMillis() - a.date.toMillis(),
+    );
+    const map = new Map<string, { title: string; data: Expense[] }>();
+    sorted.forEach((item) => {
+      const d = item.date.toDate();
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!map.has(key)) {
+        const label = d.toLocaleString("pt-BR", {
+          month: "long",
+          year: "numeric",
+        });
+        const title = label.charAt(0).toUpperCase() + label.slice(1);
+        map.set(key, { title, data: [] });
+      }
+      map.get(key)!.data.push(item);
+    });
+    return Array.from(map.values());
+  };
+
+  const privateSections = (list: PrivateExpense[]) => {
+    const sorted = [...list].sort(
+      (a, b) => b.date.toMillis() - a.date.toMillis(),
+    );
+    const map = new Map<string, { title: string; data: PrivateExpense[] }>();
+    sorted.forEach((item) => {
+      const d = item.date.toDate();
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!map.has(key)) {
+        const label = d.toLocaleString("pt-BR", {
+          month: "long",
+          year: "numeric",
+        });
+        const title = label.charAt(0).toUpperCase() + label.slice(1);
+        map.set(key, { title, data: [] });
+      }
+      map.get(key)!.data.push(item);
+    });
+    return Array.from(map.values());
+  };
 
   const handleDelete = (id: string) => {
     Alert.alert("Excluir gasto", "Tem certeza?", [
@@ -206,78 +249,106 @@ export default function ExpensesScreen() {
       )}
 
       {filter === "privados" ? (
-        <FlatList
-          data={privateExpenses}
+        <SectionList
+          sections={privateSections(privateExpenses)}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 16, paddingTop: 8 }}
           ListEmptyComponent={
             <Text style={styles.empty}>Nenhum gasto privado cadastrado.</Text>
           }
+          renderSectionHeader={({ section }) => (
+            <Text style={styles.sectionHeader}>{section.title}</Text>
+          )}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.card, styles.cardPrivate]}
-              onLongPress={() => handleDeletePrivate(item.id)}
-              onPress={() => {
-                setEditPrivateItem(item);
-                setShowPrivateModal(true);
-              }}
-            >
-              <Text style={styles.cardEmoji}>
-                {CATEGORY_ICONS[item.category] || "📦"}
-              </Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardDesc}>{item.description}</Text>
-                <Text style={styles.cardMeta}>
-                  {item.date.toDate().toLocaleDateString("pt-BR")}
+            <View style={[styles.card, styles.cardPrivate]}>
+              <TouchableOpacity
+                style={styles.cardBody}
+                onPress={() => {
+                  setEditPrivateItem(item);
+                  setShowPrivateModal(true);
+                }}
+              >
+                <Text style={styles.cardEmoji}>
+                  {CATEGORY_ICONS[item.category] || "📦"}
                 </Text>
-                <Text style={[styles.cardCategory, { color: "#DDA0DD" }]}>
-                  {item.category}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardDesc}>{item.description}</Text>
+                  <Text style={styles.cardMeta}>
+                    {item.date.toDate().toLocaleDateString("pt-BR")}
+                  </Text>
+                  <Text style={[styles.cardCategory, { color: "#DDA0DD" }]}>
+                    {item.category}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <View style={styles.cardActions}>
+                <Text style={[styles.cardAmount, { color: "#DDA0DD" }]}>
+                  {item.amount.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
                 </Text>
+                <TouchableOpacity
+                  style={[styles.deleteBtn, styles.deleteBtnPrivate]}
+                  onPress={() => handleDeletePrivate(item.id)}
+                >
+                  <Text
+                    style={[styles.deleteBtnText, styles.deleteBtnTextPrivate]}
+                  >
+                    Excluir
+                  </Text>
+                </TouchableOpacity>
               </View>
-              <Text style={[styles.cardAmount, { color: "#DDA0DD" }]}>
-                {item.amount.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </Text>
-            </TouchableOpacity>
+            </View>
           )}
         />
       ) : (
-        <FlatList
-          data={filtered}
+        <SectionList
+          sections={monthSections(filtered)}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 16, paddingTop: 8 }}
           ListEmptyComponent={
             <Text style={styles.empty}>Nenhum gasto registrado.</Text>
           }
+          renderSectionHeader={({ section }) => (
+            <Text style={styles.sectionHeader}>{section.title}</Text>
+          )}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              onLongPress={() => handleDelete(item.id)}
-              onPress={() => {
-                setEditItem(item);
-                setShowModal(true);
-              }}
-            >
-              <Text style={styles.cardEmoji}>
-                {CATEGORY_ICONS[item.category] || "📦"}
-              </Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardDesc}>{item.description}</Text>
-                <Text style={styles.cardMeta}>
-                  {item.paidByName} ·{" "}
-                  {item.date.toDate().toLocaleDateString("pt-BR")}
+            <View style={styles.card}>
+              <TouchableOpacity
+                style={styles.cardBody}
+                onPress={() => {
+                  setEditItem(item);
+                  setShowModal(true);
+                }}
+              >
+                <Text style={styles.cardEmoji}>
+                  {CATEGORY_ICONS[item.category] || "📦"}
                 </Text>
-                <Text style={styles.cardCategory}>{item.category}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardDesc}>{item.description}</Text>
+                  <Text style={styles.cardMeta}>
+                    {item.paidByName} ·{" "}
+                    {item.date.toDate().toLocaleDateString("pt-BR")}
+                  </Text>
+                  <Text style={styles.cardCategory}>{item.category}</Text>
+                </View>
+              </TouchableOpacity>
+              <View style={styles.cardActions}>
+                <Text style={styles.cardAmount}>
+                  {item.amount.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </Text>
+                <TouchableOpacity
+                  style={styles.deleteBtn}
+                  onPress={() => handleDelete(item.id)}
+                >
+                  <Text style={styles.deleteBtnText}>Excluir</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.cardAmount}>
-                {item.amount.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </Text>
-            </TouchableOpacity>
+            </View>
           )}
         />
       )}
@@ -334,6 +405,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#0F3460",
   },
+  cardBody: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  cardActions: {
+    alignItems: "flex-end",
+    gap: 6,
+  },
   cardEmoji: { fontSize: 24 },
   cardDesc: { color: "#fff", fontSize: 15, fontWeight: "600" },
   cardMeta: { color: "#888", fontSize: 11, marginTop: 2 },
@@ -344,7 +425,23 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
   cardAmount: { color: "#4ECDC4", fontWeight: "bold", fontSize: 14 },
+  deleteBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E94560",
+  },
+  deleteBtnText: { color: "#E94560", fontSize: 11, fontWeight: "600" },
   empty: { color: "#666", textAlign: "center", marginTop: 40 },
+  sectionHeader: {
+    color: "#B6B6C8",
+    fontSize: 12,
+    textTransform: "capitalize",
+    marginTop: 6,
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
   center: {
     flex: 1,
     justifyContent: "center",
@@ -389,6 +486,12 @@ const styles = StyleSheet.create({
   cardPrivate: {
     borderColor: "#5a3a6a",
     backgroundColor: "#1e1230",
+  },
+  deleteBtnPrivate: {
+    borderColor: "#DDA0DD",
+  },
+  deleteBtnTextPrivate: {
+    color: "#DDA0DD",
   },
   privateBanner: {
     marginHorizontal: 16,

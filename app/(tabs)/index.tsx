@@ -227,13 +227,14 @@ export default function DashboardScreen() {
   };
 
   // ── totais ────────────────────────────────────────────────────────────────
-  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
-  const totalFixed = expenses
-    .filter((e) => e.type === "fixa")
+  const totalFixedPaid = expenses
+    .filter((e) => e.type === "fixa" && e.paid)
     .reduce((s, e) => s + e.amount, 0);
+  const totalFixed = totalFixedPaid;
   const totalVariable = expenses
     .filter((e) => e.type === "variavel")
     .reduce((s, e) => s + e.amount, 0);
+  const totalExpenses = totalFixedPaid + totalVariable;
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
   const balance = totalIncome - totalExpenses;
 
