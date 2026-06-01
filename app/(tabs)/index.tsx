@@ -227,9 +227,15 @@ export default function DashboardScreen() {
   };
 
   // ── totais ────────────────────────────────────────────────────────────────
-  const totalFixedPaid = expenses
-    .filter((e) => e.type === "fixa" && e.paid)
-    .reduce((s, e) => s + e.amount, 0);
+  const isSameSelectedMonth = (d: Date) =>
+    d.getFullYear() === selYear && d.getMonth() === selMonth;
+  const totalFixedPaid = bills
+    .filter((b) => b.paid)
+    .filter((b) => {
+      const paidDate = b.paidAt?.toDate?.() ?? b.date.toDate();
+      return isSameSelectedMonth(paidDate);
+    })
+    .reduce((s, b) => s + b.amount, 0);
   const totalFixed = totalFixedPaid;
   const totalVariable = expenses
     .filter((e) => e.type === "variavel")
