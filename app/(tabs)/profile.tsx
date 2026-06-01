@@ -66,6 +66,13 @@ export default function ProfileScreen() {
         setActivePeriod(null);
         return;
       }
+
+      interface MonthBar {
+        key: string;
+        year: number;
+        month: number;
+        totalExpenses: number;
+      }
       setActivePeriod({ year: settings.activeYear, month: settings.activeMonth });
     });
     return unsub;
@@ -113,6 +120,32 @@ export default function ProfileScreen() {
   const prevPeriod = getPrevPeriod(periodYear, periodMonth);
   const prevSnapshot = snapshots.find(
     (s) => s.year === prevPeriod.year && s.month === prevPeriod.month,
+  );
+
+  const monthBars = useMemo(() => {
+    const map = new Map<string, MonthBar>();
+    const ensure = (year: number, month: number) => {
+      const key = `${year}-${String(month).padStart(2, "0")}`;
+      if (!map.has(key)) {
+        map.set(key, { key, year, month, totalExpenses: 0 });
+      }
+      return map.get(key)!;
+    };
+    allExpenses.forEach((e) => {
+      if (e.type === "fixa" && !e.paid) return;
+      const baseDate =
+        e.type === "fixa" && e.paidAt ? e.paidAt.toDate() : e.date.toDate();
+      const item = ensure(baseDate.getFullYear(), baseDate.getMonth());
+      item.totalExpenses += e.amount;
+    });
+    return Array.from(map.values())
+      .sort((a, b) => (a.year !== b.year ? b.year - a.year : b.month - a.month))
+      .slice(0, 6)
+      .reverse();
+  }, [allExpenses]);
+  const maxBarValue = Math.max(
+    1,
+    ...monthBars.map((m) => m.totalExpenses),
   );
 
   const myFixedPaid = bills
@@ -259,6 +292,37 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             )}
+          </>
+        )}
+
+        {groupId && monthBars.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Variacao mensal de gastos</Text>
+            <View style={styles.chartCard}>
+              <View style={styles.chartBars}>
+                {monthBars.map((m) => {
+                  const heightPct = (m.totalExpenses / maxBarValue) * 100;
+                  return (
+                    <View key={m.key} style={styles.chartBarItem}>
+                      <View style={styles.chartBarTrack}>
+                        <View
+                          style={[
+                            styles.chartBarFill,
+                            { height: `${heightPct}%` },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.chartBarLabel}>
+                        {new Date(m.year, m.month, 1)
+                          .toLocaleString("pt-BR", { month: "short" })
+                          .replace(".", "")}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <Text style={styles.chartHint}>Gastos totais por mes</Text>
+            </View>
           </>
         )}
 
@@ -439,6 +503,41 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyCompareText: { color: "#888", fontSize: 12 },
+    chartCard: {
+      width: "100%",
+      backgroundColor: "#16213E",
+      borderRadius: 14,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: "#0F3460",
+      marginBottom: 20,
+    },
+    chartBars: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-end",
+      gap: 8,
+      height: 140,
+    },
+    chartBarItem: {
+      flex: 1,
+      alignItems: "center",
+      gap: 6,
+    },
+    chartBarTrack: {
+      width: "100%",
+      flex: 1,
+      backgroundColor: "#1A1A2E",
+      borderRadius: 8,
+      overflow: "hidden",
+      justifyContent: "flex-end",
+    },
+    chartBarFill: {
+      backgroundColor: "#E94560",
+      borderRadius: 8,
+    },
+    chartBarLabel: { color: "#888", fontSize: 11, textTransform: "capitalize" },
+    chartHint: { color: "#666", fontSize: 11, marginTop: 10 },
   infoCard: {
     backgroundColor: "#16213E",
     borderRadius: 14,

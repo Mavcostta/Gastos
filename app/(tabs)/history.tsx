@@ -79,8 +79,10 @@ export default function HistoryScreen() {
     };
 
     allExpenses.forEach((e) => {
-      const d = e.date.toDate();
-      const item = ensure(d.getFullYear(), d.getMonth());
+      if (e.type === "fixa" && !e.paid) return;
+      const baseDate =
+        e.type === "fixa" && e.paidAt ? e.paidAt.toDate() : e.date.toDate();
+      const item = ensure(baseDate.getFullYear(), baseDate.getMonth());
       item.totalExpenses += e.amount;
       item.count += 1;
       if (e.type === "fixa") item.totalFixed += e.amount;
