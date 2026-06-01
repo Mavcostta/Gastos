@@ -48,7 +48,13 @@ export default function HistoryScreen() {
 
   useEffect(() => {
     if (!groupId) return;
-    const unsub = subscribeToGroupSettings(groupId, setActivePeriod);
+    const unsub = subscribeToGroupSettings(groupId, (settings) => {
+      if (!settings) {
+        setActivePeriod(null);
+        return;
+      }
+      setActivePeriod({ year: settings.activeYear, month: settings.activeMonth });
+    });
     return unsub;
   }, [groupId]);
 

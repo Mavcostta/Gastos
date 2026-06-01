@@ -14,6 +14,7 @@ import { getActiveGroupId, logout } from "../../services/auth";
 import {
   subscribeToExpenses,
   subscribeToMonthSnapshots,
+  subscribeToFixedBills,
   Expense,
   MonthSnapshot,
 } from "../../services/expenses";
@@ -29,6 +30,7 @@ export default function ProfileScreen() {
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [allIncomes, setAllIncomes] = useState<Income[]>([]);
   const [snapshots, setSnapshots] = useState<MonthSnapshot[]>([]);
+  const [bills, setBills] = useState<Expense[]>([]);
   const [activePeriod, setActivePeriod] = useState<{
     year: number;
     month: number;
@@ -52,8 +54,20 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (!groupId) return;
+    const unsub = subscribeToFixedBills(groupId, setBills);
+    return unsub;
+  }, [groupId]);
+
+  useEffect(() => {
+    if (!groupId) return;
     ensureGroupActiveMonth(groupId);
-    const unsub = subscribeToGroupSettings(groupId, setActivePeriod);
+    const unsub = subscribeToGroupSettings(groupId, (settings) => {
+      if (!settings) {
+        setActivePeriod(null);
+        return;
+      }
+      setActivePeriod({ year: settings.activeYear, month: settings.activeMonth });
+    });
     return unsub;
   }, [groupId]);
 
@@ -101,15 +115,22 @@ export default function ProfileScreen() {
     (s) => s.year === prevPeriod.year && s.month === prevPeriod.month,
   );
 
-  const totalPessoal = myExpenses.reduce((s, e) => s + e.amount, 0);
-  const totalFixo = myExpenses
-    .filter((e) => e.type === "fixa")
-    .reduce((s, e) => s + e.amount, 0);
+  const myFixedPaid = bills
+    .filter((b) => b.paid)
+    .filter((b) => b.paidBy === user?.uid || b.paidByName2 === profile?.name)
+    .reduce((s, b) => s + b.amount, 0);
+  const totalPessoal =
+    myExpenses.reduce((s, e) => s + e.amount, 0) + myFixedPaid;
+  const totalFixo = myFixedPaid;
   const totalVariavel = myExpenses
     .filter((e) => e.type === "variavel")
     .reduce((s, e) => s + e.amount, 0);
 
-  const currentTotalExpenses = periodExpenses.reduce((s, e) => s + e.amount, 0);
+  const currentFixedPaid = bills
+    .filter((b) => b.paid)
+    .reduce((s, b) => s + b.amount, 0);
+  const currentTotalExpenses =
+    periodExpenses.reduce((s, e) => s + e.amount, 0) + currentFixedPaid;
   const currentTotalIncome = periodIncomes.reduce((s, i) => s + i.amount, 0);
   const currentBalance = currentTotalIncome - currentTotalExpenses;
 
