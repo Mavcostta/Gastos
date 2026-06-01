@@ -87,7 +87,13 @@ export default function DashboardScreen() {
   useEffect(() => {
     if (!groupId) return;
     ensureGroupActiveMonth(groupId);
-    const unsub = subscribeToGroupSettings(groupId, setActivePeriod);
+    const unsub = subscribeToGroupSettings(groupId, (settings) => {
+      if (!settings) {
+        setActivePeriod(null);
+        return;
+      }
+      setActivePeriod({ year: settings.activeYear, month: settings.activeMonth });
+    });
     return unsub;
   }, [groupId]);
 
