@@ -148,6 +148,14 @@ export default function DashboardScreen() {
     month: "long",
     year: "numeric",
   });
+  const activeMonthLabel = new Date(
+    activePeriod?.year ?? today.getFullYear(),
+    activePeriod?.month ?? today.getMonth(),
+    1,
+  ).toLocaleString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
 
   const confirmCloseMonth = () => {
     const msg = `Fechar ${monthLabel}? Você vai começar a lançar no próximo mês.`;
@@ -200,6 +208,16 @@ export default function DashboardScreen() {
     } finally {
       setClosingMonth(false);
     }
+  };
+
+  const goToActiveMonth = () => {
+    if (activePeriod) {
+      setSelYear(activePeriod.year);
+      setSelMonth(activePeriod.month);
+      return;
+    }
+    setSelYear(today.getFullYear());
+    setSelMonth(today.getMonth());
   };
 
   // ── totais ────────────────────────────────────────────────────────────────
@@ -317,6 +335,10 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
+        <Text style={styles.activeMonthHint}>
+          Mes ativo: {activeMonthLabel}
+        </Text>
+
         {isActiveMonth && (
           <TouchableOpacity
             style={[
@@ -328,6 +350,17 @@ export default function DashboardScreen() {
           >
             <Text style={styles.closeMonthBtnText}>
               {closingMonth ? "Fechando..." : "Fechar mês"}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {!isActiveMonth && (
+          <TouchableOpacity
+            style={styles.goActiveBtn}
+            onPress={goToActiveMonth}
+          >
+            <Text style={styles.goActiveBtnText}>
+              Ir para o mes ativo
             </Text>
           </TouchableOpacity>
         )}
@@ -751,6 +784,13 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
   },
+  activeMonthHint: {
+    color: "#666",
+    fontSize: 11,
+    textAlign: "center",
+    marginBottom: 6,
+    textTransform: "capitalize",
+  },
   closeMonthBtn: {
     marginHorizontal: 16,
     marginBottom: 10,
@@ -763,6 +803,17 @@ const styles = StyleSheet.create({
   },
   closeMonthBtnDisabled: { opacity: 0.7 },
   closeMonthBtnText: { color: "#FF6B6B", fontWeight: "700", fontSize: 12 },
+  goActiveBtn: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    backgroundColor: "rgba(78,205,196,0.12)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#4ECDC4",
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  goActiveBtnText: { color: "#4ECDC4", fontWeight: "700", fontSize: 12 },
 
   // alertas
   alertsBox: {
