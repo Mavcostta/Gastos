@@ -34,6 +34,7 @@ export default function BillsScreen() {
     year: number;
     month: number;
   } | null>(null);
+  const today = new Date();
 
   const groupId = getActiveGroupId(profile);
 
@@ -46,9 +47,24 @@ export default function BillsScreen() {
   useEffect(() => {
     if (!groupId) return;
     ensureGroupActiveMonth(groupId);
-    const unsub = subscribeToGroupSettings(groupId, setActivePeriod);
+    const unsub = subscribeToGroupSettings(groupId, (settings) => {
+      if (!settings) {
+        setActivePeriod(null);
+        return;
+      }
+      setActivePeriod({ year: settings.activeYear, month: settings.activeMonth });
+    });
     return unsub;
   }, [groupId]);
+
+  const activeMonthLabel = new Date(
+    activePeriod?.year ?? today.getFullYear(),
+    activePeriod?.month ?? today.getMonth(),
+    1,
+  ).toLocaleString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
 
   const handleDelete = (id: string) => {
     if (Platform.OS === "web") {
@@ -122,6 +138,8 @@ export default function BillsScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      <Text style={styles.activeMonthHint}>Mes ativo: {activeMonthLabel}</Text>
 
       {/* Banner de totais */}
       <View style={styles.totalBanner}>
@@ -357,4 +375,10 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   noGroupText: { color: "#888", textAlign: "center" },
+  activeMonthHint: {
+    color: "#6c7a93",
+    fontSize: 12,
+    textAlign: "center",
+    marginBottom: 6,
+  },
 });
