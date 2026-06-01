@@ -147,6 +147,7 @@ export default function ProfileScreen() {
     1,
     ...monthBars.map((m) => m.totalExpenses),
   );
+  const chartMaxHeight = 120;
 
   const myFixedPaid = bills
     .filter((b) => b.paid)
@@ -301,14 +302,17 @@ export default function ProfileScreen() {
             <View style={styles.chartCard}>
               <View style={styles.chartBars}>
                 {monthBars.map((m) => {
-                  const heightPct = (m.totalExpenses / maxBarValue) * 100;
+                  const heightPx = Math.max(
+                    4,
+                    Math.round((m.totalExpenses / maxBarValue) * chartMaxHeight),
+                  );
                   return (
                     <View key={m.key} style={styles.chartBarItem}>
                       <View style={styles.chartBarTrack}>
                         <View
                           style={[
                             styles.chartBarFill,
-                            { height: `${heightPct}%` },
+                            { height: heightPx },
                           ]}
                         />
                       </View>
@@ -517,7 +521,7 @@ const styles = StyleSheet.create({
       justifyContent: "space-between",
       alignItems: "flex-end",
       gap: 8,
-      height: 140,
+      height: 150,
     },
     chartBarItem: {
       flex: 1,
@@ -526,7 +530,7 @@ const styles = StyleSheet.create({
     },
     chartBarTrack: {
       width: "100%",
-      flex: 1,
+      height: 120,
       backgroundColor: "#1A1A2E",
       borderRadius: 8,
       overflow: "hidden",
